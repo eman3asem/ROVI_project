@@ -11,7 +11,7 @@ from ompl import geometric as og
 from robot import *
 
 # Global queue container for trajectories
-Close_gripper=255
+Close_gripper=250
 Open_gripper=0
 
 def points(robot, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_frame):
@@ -171,13 +171,13 @@ def RRT(robot, d, m, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_frame
     for i in range(len(obj_frame)):
         EXE_TIME = 1000 #ms  
         # move to the object
-        goal_q = robot.robot_ur5.ik_LM(Tep=obj_frame[i]* sm.SE3.Tz(-0.01), q0=robot.queue[-1][0])[0]
+        goal_q = robot.robot_ur5.ik_LM(Tep=obj_frame[i]* sm.SE3.Tz(-0.02), q0=robot.queue[-1][0])[0]
         sol_traj = RRT_planner(d=d, m=m, start_q=robot.queue[-1][0], goal_q=goal_q)
         robot.move_j_via(points=sol_traj, t=EXE_TIME)
 
         robot.set_gripper(255) # Close gripper
     
-        goal_q = robot.robot_ur5.ik_LM(Tep=obj_drop_frame[i]* sm.SE3.Tz(0.05), q0=robot.queue[-1][0])[0]
+        goal_q = robot.robot_ur5.ik_LM(Tep=obj_drop_frame[i]* sm.SE3.Tx(-0.08), q0=robot.queue[-1][0])[0]
         sol_traj = RRT_planner(d=d, m=m, start_q=robot.queue[-1][0], goal_q=goal_q)
         robot.move_j_via(points=sol_traj, t=EXE_TIME)
 
@@ -247,9 +247,9 @@ def program(d, m):
     t_block_frame = get_mjobj_frame(model=m, data=d, obj_name="t_block") * sm.SE3.Rx(np.pi) *sm.SE3.Rz(np.pi/2) # Get body frame
     drop_point_t_block_frame = get_mjobj_frame(model=m, data=d, obj_name="drop_point_tblock") * sm.SE3.Rx(-np.pi)*sm.SE3.Rz(np.pi/2) # Get body frame
 
-    cylinder_frame = get_mjobj_frame(model=m, data=d, obj_name="cylinder") * sm.SE3.Rx(-np.pi) * sm.SE3.Tz(-0.08) * sm.SE3.Rz(np.pi/2) # Get body frame
+    cylinder_frame = get_mjobj_frame(model=m, data=d, obj_name="cylinder") *sm.SE3.Rx(np.pi/2) # Get body frame
     # for side pick: *sm.SE3.Rx(-np.pi/2)
-    drop_point_cylinder_frame = get_mjobj_frame(model=m, data=d, obj_name="drop_point_cylinder")  * sm.SE3.Rx(np.pi) * sm.SE3.Tz(-0.08)* sm.SE3.Rz(np.pi/2) # Get body frame
+    drop_point_cylinder_frame = get_mjobj_frame(model=m, data=d, obj_name="drop_point_cylinder") *sm.SE3.Rx(-np.pi/2) # Get body frame
 
     pick_zone_frame = get_mjobj_frame(model=m, data=d, obj_name="pickup_point_cylinder") * sm.SE3.Rx(-np.pi) # Get body frame
     drop_zone_frame = get_mjobj_frame(model=m, data=d, obj_name="drop_point_cylinder") *  sm.SE3.Rx(np.pi)  # Get body frame
@@ -273,7 +273,7 @@ def program(d, m):
     # RRT
     elif usr_input.lower() == "rrt":
         print("RRT Planner")
-        trajectory = RRTT(robot, d, m, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_frame)
+        trajectory = RRT(robot, d, m, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_frame)
     #wrong input
     else:
         print("Wrong input, defaulting to RRT")

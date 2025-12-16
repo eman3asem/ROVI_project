@@ -37,3 +37,15 @@ WARNING: Nan, Inf or huge value in QACC at DOF 17. The simulation is unstable. T
 Mon Dec 15 22:43:15 2025
 WARNING: Nan, Inf or huge value in QACC at DOF 18. The simulation is unstable. Time = 41.4600.
 
+Tue Dec 16 20:41:22 2025
+WARNING: ARB_clip_control unavailable while mjDEPTH_ZEROFAR requested, depth accuracy will be limited
+
+Tue Dec 16 21:07:05 2025
+WARNING: ARB_clip_control unavailable while mjDEPTH_ZEROFAR requested, depth accuracy will be limited
+
+Tue Dec 16 21:11:09 2025
+WARNING: ARB_clip_control unavailable while mjDEPTH_ZEROFAR requested, depth accuracy will be limited
+
+Tue Dec 16 21:14:47 2025
+WARNING: ARB_clip_control unavailable while mjDEPTH_ZEROFAR requested, depth accuracy will be limited
+

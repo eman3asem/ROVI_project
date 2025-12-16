@@ -57,4 +57,4 @@ def program(d, m):
     
     renderer = mj.Renderer(m, height=480, width=640)
     get_pointcloud(m, d, renderer, f"point_cloud_{id:04}.pcd", camera_name=camera_name)
-    show_pointcloud(f"point_cloud_{id:04}.pcd")
+    # show_pointcloud(f"point_cloud_{id:04}.pcd")
