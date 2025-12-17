@@ -11,7 +11,7 @@ from ompl import geometric as og
 from robot import *
 
 # Global queue container for trajectories
-Close_gripper=250
+Close_gripper=255
 Open_gripper=0
 
 def points(robot, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_frame):
@@ -46,7 +46,7 @@ def points(robot, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_frame):
         via_points_list.append((q_drop_zone, Close_gripper))
 
         #7
-        q_pre_drop = robot.robot_ur5.ik_LM(Tep=obj_drop_frame[i] * sm.SE3.Tz(0.15), q0=q_drop_zone)[0]
+        q_pre_drop = robot.robot_ur5.ik_LM(Tep=obj_drop_frame[i] * sm.SE3.Tz(-0.15), q0=q_drop_zone)[0]
         via_points_list.append((q_pre_drop, Open_gripper))
 
         #8

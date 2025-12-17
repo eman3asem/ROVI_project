@@ -18,12 +18,12 @@ noise_level = settings.noise_levels[0]
 def main():
     print(os.getcwd())
 
-    scene_pointcloud_file_name = settings.input_folder + f'point_cloud_{scene_id:04}.pcd'
+    scene_pointcloud_file_name = "point_cloud_0000.pcd"
     scene_pointcloud = o3d.io.read_point_cloud(scene_pointcloud_file_name)
     
     scene_pointcloud_noisy = helpers.add_noise(scene_pointcloud, 0, noise_level)
     
-    object_mesh = o3d.io.read_triangle_mesh(settings.input_folder + "duck.stl")
+    object_mesh = o3d.io.read_triangle_mesh("./exercises/duck.stl")
     object_pointcloud = object_mesh.sample_points_poisson_disk(10000)
 
     o3d.visualization.draw_geometries([object_pointcloud, scene_pointcloud_noisy], window_name='Pre alignment')
@@ -34,7 +34,7 @@ def main():
     print("Final pose")
     print (estimated_pose)
 
-    ground_truth = np.loadtxt(settings.input_folder + f"gt_{scene_id:04}.txt")
+    ground_truth = np.loadtxt("gt_0000.txt")
     
     print("Ground truth")
     print(ground_truth)

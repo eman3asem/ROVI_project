@@ -8,6 +8,13 @@ import mujoco
 
 from cam import *
 
+from robot import *
+from exercises.do_pe import do_pose_estimation
+
+from cam import get_pointcloud, get_camera_pose_cv
+from exercises.Project import via_points
+from exercises.helpers import computeError
+
 
 def r2q(rot):
     """
@@ -36,12 +43,17 @@ def program(d, m):
     rot = SO3.Eul(rand_rot, 90, 90,unit="deg").R
     d.joint('duck').qpos[3:] = r2q(rot)
 
+    # 100 steps = 0.2 seconds of simulation time
+    for _ in range(100):
+        mujoco.mj_step(m, d)
+    
+    # NOW get duck position AFTER it has settled on the table
     duck_pos = d.body('duck').xpos
     duck_rot = d.body('duck').xmat.reshape(3, 3)
     duck_rot = trnorm(duck_rot)
     duck_se3 = SE3.Rt(duck_rot, duck_pos)
 
-    mujoco.mj_step(m, d)
+    # mujoco.mj_step(m, d)
 
     cam_se3_2 = get_camera_pose_cv(m, d, camera_name=camera_name)
 
@@ -58,3 +70,50 @@ def program(d, m):
     renderer = mj.Renderer(m, height=480, width=640)
     get_pointcloud(m, d, renderer, f"point_cloud_{id:04}.pcd", camera_name=camera_name)
     # show_pointcloud(f"point_cloud_{id:04}.pcd")
+
+
+    ############################################# my code
+    robot = UR5robot(data=d, model=m)
+    # I1: Pose estimate the duck
+    scene_pointcloud = o3d.io.read_point_cloud(f"point_cloud_{id:04}.pcd")
+    #==============================================#
+    #from trail_run.py file in Vision project
+    # Load duck model as point cloud
+    duck_mesh = o3d.io.read_triangle_mesh('./exercises/duck.stl')
+    duck_pointcloud = duck_mesh.sample_points_poisson_disk(10000)
+    
+    # Estimate duck pose in camera coordinates
+    estimated_pose = do_pose_estimation(scene_pointcloud, duck_pointcloud)
+
+    ground_truth = np.loadtxt(f"gt_{id:04}.txt")
+    
+    print("Ground truth")
+    print(ground_truth)
+
+    print("Error")
+    print(computeError(ground_truth,estimated_pose))
+    #==============================================#
+    
+    # Get camera pose and convert estimated pose to world coordinates
+    cam_se3 = get_camera_pose_cv(m, d, camera_name="cam1")
+    duck_camera_pose = sm.SE3(estimated_pose, check=False)* sm.SE3.Rx(np.pi)  # Convert 4x4 numpy array to SE3
+    duck_world_pose = cam_se3 * duck_camera_pose 
+    print(duck_world_pose) # Transform to world frame
+    
+    
+    # only choosing the traslation frame for grasping
+    duck_position = duck_world_pose.t
+    # adding a normal rotation to the grasp frame
+    R_grasp = sm.SE3.Rx(-np.pi)
+
+    #setting the frames for the Point-to-Point interpolator
+    obj_frame = sm.SE3.Rt(R_grasp.R, duck_position) *sm.SE3.Rz(np.pi/2)
+    obj_drop_frame = get_mjobj_frame(model=m, data=d, obj_name="zone_pickup") *sm.SE3.Rx(-np.pi) *sm.SE3.Rx(-np.pi)
+
+    pick_zone_frame = get_mjobj_frame(model=m, data=d, obj_name="zone_pickup") *sm.SE3.Rx(-np.pi)*sm.SE3.Tz(-0.15) # Pick zone
+    drop_zone_frame = get_mjobj_frame(model=m, data=d, obj_name="zone_drop") *sm.SE3.Rx(-np.pi)*sm.SE3.Tz(-0.15) # Drop zone
+    
+    # getting the trajectory using Point-to-Point interpolator with trapezoidal velocity profile
+    trajectory = via_points(robot, [obj_frame], [obj_drop_frame], pick_zone_frame, drop_zone_frame, steps=800)
+
+    return trajectory
