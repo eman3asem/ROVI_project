@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import random
 import mujoco
 
+from exercises.json_data import export_trajectory_data
+
 from ompl import base as ob
 from ompl import geometric as og
 
@@ -21,6 +23,11 @@ def points(robot, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_frame):
     via_points_list.append((q0,Open_gripper))
 
     for i in range(len(obj_frame)):
+        print(i)
+        if i == 0:
+            z_offset = sm.SE3.Tz(-0.09)
+        else:
+            z_offset = sm.SE3.Tz(-0.02)
         #1
         q_start_zone=robot.robot_ur5.ik_LM(Tep=pick_zone_frame *sm.SE3.Tz(-0.15) , q0=q0)[0]
         via_points_list.append((q_start_zone,Open_gripper))
@@ -30,7 +37,7 @@ def points(robot, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_frame):
         via_points_list.append((q_pre_pick, Open_gripper))
 
         #3
-        q_pick = robot.robot_ur5.ik_LM(Tep=obj_frame[i], q0=q_pre_pick)[0]
+        q_pick = robot.robot_ur5.ik_LM(Tep=obj_frame[i]* z_offset, q0=q_pre_pick)[0]
         via_points_list.append((q_pick,Close_gripper))
 
         #4
@@ -41,6 +48,9 @@ def points(robot, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_frame):
         q_start_zone=robot.robot_ur5.ik_LM(Tep=pick_zone_frame, q0=q_after_pick)[0]
         via_points_list.append((q_start_zone, Close_gripper))
 
+        if i == 0:
+            q_drop_zone = robot.robot_ur5.ik_LM(Tep=drop_zone_frame *sm.SE3.Tz(0.50), q0=q_start_zone)[0]
+            via_points_list.append((q_drop_zone, Close_gripper))
         #6
         q_drop_zone = robot.robot_ur5.ik_LM(Tep=drop_zone_frame, q0=q_start_zone)[0]
         via_points_list.append((q_drop_zone, Close_gripper))
@@ -76,7 +86,7 @@ def parabolic_q_interpolation(start_q, end_q, steps):
         if t0 <= t and t < t0 + tb:
             q_t = q0 + 0.5 * ddqb*(t-t0)**2
         elif t0 + tb <= t and t < tf - tb:
-            q_t = q0 + ddqb*tb*(t-t0-tb/2)
+            q_t = q0 + 0.5*ddqb*tb**2 + ddqb*tb*(t - t0 - tb)
         elif  tf-tb <= t and t < tf:
             q_t = qf - 0.5*ddqb*(tf-t)**2
         seg.append((q_t, start_q[1]))
@@ -163,21 +173,36 @@ def RRT_planner(d, m, start_q, goal_q):
 ## ======= excercise 6 code end ======= ##
 
 def RRT(robot, d, m, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_frame):
+    EXE_TIME= 1000 #ms
     q0 = robot.get_current_q()
     # Move to pick zone 
     goal_q_start = robot.robot_ur5.ik_LM(Tep=pick_zone_frame, q0=q0)[0]
-    robot.move_j(start_q=q0, end_q=goal_q_start, t=500)
+    robot.move_j(start_q=q0, end_q=goal_q_start, t=EXE_TIME)
 
     for i in range(len(obj_frame)):
-        EXE_TIME = 1000 #ms  
+          
+        if i == 0:
+            z_offset = sm.SE3.Tz(-0.09)
+        else:
+            z_offset = sm.SE3.Tz(-0.02)
         # move to the object
-        goal_q = robot.robot_ur5.ik_LM(Tep=obj_frame[i]* sm.SE3.Tz(-0.02), q0=robot.queue[-1][0])[0]
+
+
+        goal_q = robot.robot_ur5.ik_LM(Tep=obj_frame[i]* z_offset, q0=robot.queue[-1][0])[0]
         sol_traj = RRT_planner(d=d, m=m, start_q=robot.queue[-1][0], goal_q=goal_q)
         robot.move_j_via(points=sol_traj, t=EXE_TIME)
 
         robot.set_gripper(255) # Close gripper
+
+        goal_q = robot.robot_ur5.ik_LM(Tep=obj_frame[i]* sm.SE3.Tz(-0.15), q0=robot.queue[-1][0])[0]
+        sol_traj = RRT_planner(d=d, m=m, start_q=robot.queue[-1][0], goal_q=goal_q)
+        robot.move_j_via(points=sol_traj, t=EXE_TIME)
+
+        # goal_q = robot.robot_ur5.ik_LM(Tep=drop_zone_frame* sm.SE3.Tz(0.15), q0=robot.queue[-1][0])[0]
+        # sol_traj = RRT_planner(d=d, m=m, start_q=robot.queue[-1][0], goal_q=goal_q)
+        # robot.move_j_via(points=sol_traj, t=EXE_TIME)
     
-        goal_q = robot.robot_ur5.ik_LM(Tep=obj_drop_frame[i]* sm.SE3.Tx(-0.08), q0=robot.queue[-1][0])[0]
+        goal_q = robot.robot_ur5.ik_LM(Tep=obj_drop_frame[i]* sm.SE3.Tz(0.08), q0=robot.queue[-1][0])[0]
         sol_traj = RRT_planner(d=d, m=m, start_q=robot.queue[-1][0], goal_q=goal_q)
         robot.move_j_via(points=sol_traj, t=EXE_TIME)
 
@@ -242,27 +267,28 @@ def program(d, m):
     robot = UR5robot(data=d, model=m)
 
     box_frame = get_mjobj_frame(model=m, data=d, obj_name="box") * sm.SE3.Rx(-np.pi)  # Get body frame
-    drop_point_box_frame = get_mjobj_frame(model=m, data=d, obj_name="drop_point_box") * sm.SE3.Rx(np.pi)  # Get body frame
+    drop_point_box_frame = get_mjobj_frame(model=m, data=d, obj_name="drop_point_cylinder") * sm.SE3.Rx(np.pi)  # Get body frame
 
     t_block_frame = get_mjobj_frame(model=m, data=d, obj_name="t_block") * sm.SE3.Rx(np.pi) *sm.SE3.Rz(np.pi/2) # Get body frame
     drop_point_t_block_frame = get_mjobj_frame(model=m, data=d, obj_name="drop_point_tblock") * sm.SE3.Rx(-np.pi)*sm.SE3.Rz(np.pi/2) # Get body frame
 
-    cylinder_frame = get_mjobj_frame(model=m, data=d, obj_name="cylinder") *sm.SE3.Rx(np.pi/2) # Get body frame
+    cylinder_frame = get_mjobj_frame(model=m, data=d, obj_name="cylinder") *sm.SE3.Rx(np.pi)*sm.SE3.Rz(np.pi/2) # Get body frame
     # for side pick: *sm.SE3.Rx(-np.pi/2)
-    drop_point_cylinder_frame = get_mjobj_frame(model=m, data=d, obj_name="drop_point_cylinder") *sm.SE3.Rx(-np.pi/2) # Get body frame
+    drop_point_cylinder_frame = get_mjobj_frame(model=m, data=d, obj_name="drop_point_box") *sm.SE3.Rx(np.pi)*sm.SE3.Rz(np.pi/2) # Get body frame
 
     pick_zone_frame = get_mjobj_frame(model=m, data=d, obj_name="pickup_point_cylinder") * sm.SE3.Rx(-np.pi) # Get body frame
     drop_zone_frame = get_mjobj_frame(model=m, data=d, obj_name="drop_point_cylinder") *  sm.SE3.Rx(np.pi)  # Get body frame
 
     # obj_frame, obj_drop_frame = [(cylinder_frame, drop_point_cylinder_frame), (t_block_frame, drop_point_t_block_frame), (box_frame, drop_point_box_frame)]
-    # obj_frame = [ cylinder_frame,t_block_frame, box_frame]
-    # obj_drop_frame = [drop_point_cylinder_frame, drop_point_t_block_frame, drop_point_box_frame]
+    obj_frame = [ cylinder_frame,t_block_frame, box_frame]
+    obj_drop_frame = [drop_point_cylinder_frame, drop_point_t_block_frame, drop_point_box_frame]
     
-    obj_frame = [t_block_frame, box_frame, cylinder_frame]
-    obj_drop_frame = [drop_point_t_block_frame, drop_point_box_frame, drop_point_cylinder_frame]
+    # obj_frame = [t_block_frame, box_frame, cylinder_frame]
+    # obj_drop_frame = [drop_point_t_block_frame, drop_point_box_frame, drop_point_cylinder_frame]
     # ===== EXPLICITLY SET PLANNER =====
 
-    usr_input = input("Points/RRT: ")
+    # usr_input = input("Points/RRT: ")
+    usr_input = "rrt"
 
     trajectory = []
     # via_q=points(robot, d, m, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_frame)
@@ -270,13 +296,16 @@ def program(d, m):
     if usr_input.lower() == "points":
         print("Point to Point planner")
         trajectory = via_points(robot, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_frame, steps=800)
+        # export_trajectory_data(trajectory, robot, "p2p_results.json")
     # RRT
     elif usr_input.lower() == "rrt":
         print("RRT Planner")
         trajectory = RRT(robot, d, m, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_frame)
+        export_trajectory_data(trajectory, robot, "rrt_results.json")
     #wrong input
     else:
         print("Wrong input, defaulting to RRT")
         trajectory = RRT(robot, d, m, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_frame)
+        # export_trajectory_data(trajectory, robot, "rrt_results.json")
 
     return trajectory
