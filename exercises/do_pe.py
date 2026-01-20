@@ -5,20 +5,23 @@ from tqdm import tqdm
 import random
 
 def do_pose_estimation(scene_pointcloud, object_pointcloud):
-    print("YOU NEED TO IMPLEMENT THIS!")
-
+    # print("YOU NEED TO IMPLEMENT THIS!")
+    #1. Preprocess Point clouds
     scene_pointcloud_filtered= preprocess_pointcloud(scene_pointcloud)
     object_pointcloud= voxel_grid(object_pointcloud)
+    #2. Global Pose Estimation
     global_pose=global_pose_estimation(copy.deepcopy(object_pointcloud), scene_pointcloud_filtered)
     alighned_object=copy.deepcopy(object_pointcloud)
     alighned_object.transform(global_pose)
+    #3. Local Pose Estimation
     local_pose=local_pose_estimation(alighned_object, scene_pointcloud_filtered)
+    #4. Combine poses to get the final pose
     final_pose = local_pose @ global_pose
 
     return final_pose
 
 ## ======= excercise 5 code below ======= ##
-# This function just displays the effect of one of the functions visually, feel free to ignore or remove it.
+# This function just displays the effect of one of the functions visually
 def display_removal(preserved_points, removed_points):
     removed_points.paint_uniform_color([1, 0, 0])        # Show removed points in red
     preserved_points.paint_uniform_color([0.8, 0.8, 0.8])# Show preserved points in gray
@@ -34,6 +37,7 @@ def outlier_removal(input_cloud):
     return input_cloud.select_by_index(ind)
 
 def spatial_filter(input_cloud):
+    # Define bounding box limits calculated from the scene
     min_bound = [-1.30, -0.25, 0.9]
     max_bound = [1.278, 0.15, 1.3]
 
@@ -57,7 +61,7 @@ def preprocess_pointcloud(input_cloud):
 ## ======= end of excercise 5 code ======= ##
 
 ### ======= excercise 7 code below ======= ##
-############## local pose estimation ##############
+########### local pose estimation ###########
 def create_kdtree(scn):
     tree = o3d.geometry.KDTreeFlann(scn)
     return tree
@@ -79,7 +83,7 @@ def find_closest_points(obj_aligned, tree, thressq):
     return corr
 
 def estimate_transformation(obj, scn, corr):
-    # 2) Estimate transformation
+    # 2) Estimate transformation using point-to-plane metric for better accuracy
     est = o3d.pipelines.registration.TransformationEstimationPointToPlane()
     T = est.compute_transformation(obj, scn, corr)
     return T
@@ -126,7 +130,7 @@ def local_pose_estimation(obj, scn):
 
     return pose
 
-############## global pose estimation ##############
+########## global pose estimation ##########
 def set_RANSAC_parameters():
     it = 2000
     thressq = 0.01**2
@@ -165,8 +169,8 @@ def sample_3_random_correspondences(corr):
     if len(corr) < 3:
         return None
 
-    # FIX suggestion with chatgpt: random.sample cannot handle Open3D vectors directly.
-    # We sample 3 random INDICES from the range of the correspondence size.
+    # FIX suggested by AI: random.sample cannot handle Open3D vectors directly.
+    # We sample 3 random indices from the range of the correspondence size.
     idx = random.sample(range(len(corr)), k=3)
 
     # Retrieve the specific correspondences using the sampled indices
@@ -248,4 +252,6 @@ def global_pose_estimation(obj, scn):
     obj = apply_pose(obj, pose_best)
 
     return pose_best
+
+### ======= excercise 7 code end ======= ##
 

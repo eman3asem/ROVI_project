@@ -5,14 +5,11 @@ import matplotlib.pyplot as plt
 import random
 import mujoco
 
-from exercises.json_data import export_trajectory_data
-
 from ompl import base as ob
 from ompl import geometric as og
 
 from robot import *
 
-# Global queue container for trajectories
 Close_gripper=255
 Open_gripper=0
 
@@ -24,7 +21,7 @@ def points(robot, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_frame):
 
     for i in range(len(obj_frame)):
         print(i)
-        if i == 0:
+        if i == 2: # cylinder, remember to change this if you change the order of the objects
             z_offset = sm.SE3.Tz(-0.09)
         else:
             z_offset = sm.SE3.Tz(-0.02)
@@ -48,9 +45,6 @@ def points(robot, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_frame):
         q_start_zone=robot.robot_ur5.ik_LM(Tep=pick_zone_frame, q0=q_after_pick)[0]
         via_points_list.append((q_start_zone, Close_gripper))
 
-        if i == 0:
-            q_drop_zone = robot.robot_ur5.ik_LM(Tep=drop_zone_frame *sm.SE3.Tz(0.50), q0=q_start_zone)[0]
-            via_points_list.append((q_drop_zone, Close_gripper))
         #6
         q_drop_zone = robot.robot_ur5.ik_LM(Tep=drop_zone_frame, q0=q_start_zone)[0]
         via_points_list.append((q_drop_zone, Close_gripper))
@@ -143,17 +137,15 @@ def RRT_planner(d, m, start_q, goal_q):
     ss.setStartAndGoalStates(start, goal)
 
     planner = og.RRT(ss.getSpaceInformation())
-    # planner.setRange(0.1)
 
     ss.setPlanner(planner)
     
     # Solve the problem
-    solved = ss.solve(10.0)
+    solved = ss.solve(5.0)
     
     if solved:
         # Get the solution path
         path = ss.getSolutionPath()
-        # path.interpolate(100)
         print("Found a Solution!")
         # Print basic information about the path
         print(f"Path length: {path.length()}")
@@ -181,7 +173,7 @@ def RRT(robot, d, m, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_frame
 
     for i in range(len(obj_frame)):
           
-        if i == 0:
+        if i == 2: # cylinder, remember to change this if you change the order of the objects
             z_offset = sm.SE3.Tz(-0.09)
         else:
             z_offset = sm.SE3.Tz(-0.02)
@@ -197,10 +189,6 @@ def RRT(robot, d, m, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_frame
         goal_q = robot.robot_ur5.ik_LM(Tep=obj_frame[i]* sm.SE3.Tz(-0.15), q0=robot.queue[-1][0])[0]
         sol_traj = RRT_planner(d=d, m=m, start_q=robot.queue[-1][0], goal_q=goal_q)
         robot.move_j_via(points=sol_traj, t=EXE_TIME)
-
-        # goal_q = robot.robot_ur5.ik_LM(Tep=drop_zone_frame* sm.SE3.Tz(0.15), q0=robot.queue[-1][0])[0]
-        # sol_traj = RRT_planner(d=d, m=m, start_q=robot.queue[-1][0], goal_q=goal_q)
-        # robot.move_j_via(points=sol_traj, t=EXE_TIME)
     
         goal_q = robot.robot_ur5.ik_LM(Tep=obj_drop_frame[i]* sm.SE3.Tz(0.08), q0=robot.queue[-1][0])[0]
         sol_traj = RRT_planner(d=d, m=m, start_q=robot.queue[-1][0], goal_q=goal_q)
@@ -208,15 +196,11 @@ def RRT(robot, d, m, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_frame
 
         robot.set_gripper(0) # open gripper
 
-        # goal_q_start = robot.robot_ur5.ik_LM(Tep=pick_zone_frame, q0=robot.queue[-1][0])[0]
-        # sol_traj = RRT_planner(d=d, m=m, start_q=robot.queue[-1][0], goal_q=goal_q)
-        # robot.move_j_via(points=sol_traj, t=EXE_TIME)
-
     return robot.queue
 
-def RRTT(robot, d, m, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_frame):
+# Hybrid P2P + RRT planner function for future work
+def Hybrid_P2P_RRT(robot, d, m, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_frame):
 
-    via_points_list = []
     q0 = robot.get_current_q()
     # Move to pick zone 
     goal_q_start = robot.robot_ur5.ik_LM(Tep=pick_zone_frame, q0=q0)[0]
@@ -229,7 +213,6 @@ def RRTT(robot, d, m, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_fram
         goal_q = robot.robot_ur5.ik_LM(Tep=obj_frame[i]* sm.SE3.Tz(-0.15), q0=start_q)[0]
         robot.move_j(start_q=start_q, end_q=goal_q, t=EXE_TIME)
         #back to pickup position
-        # for side pick: *sm.SE3.Rx(-np.pi/2)
         goal_q = robot.robot_ur5.ik_LM(Tep=obj_frame[i], q0=robot.queue[-1][0])[0]
         robot.move_j(start_q=robot.queue[-1][0], end_q=goal_q, t=EXE_TIME)
         
@@ -273,39 +256,31 @@ def program(d, m):
     drop_point_t_block_frame = get_mjobj_frame(model=m, data=d, obj_name="drop_point_tblock") * sm.SE3.Rx(-np.pi)*sm.SE3.Rz(np.pi/2) # Get body frame
 
     cylinder_frame = get_mjobj_frame(model=m, data=d, obj_name="cylinder") *sm.SE3.Rx(np.pi)*sm.SE3.Rz(np.pi/2) # Get body frame
-    # for side pick: *sm.SE3.Rx(-np.pi/2)
     drop_point_cylinder_frame = get_mjobj_frame(model=m, data=d, obj_name="drop_point_box") *sm.SE3.Rx(np.pi)*sm.SE3.Rz(np.pi/2) # Get body frame
 
     pick_zone_frame = get_mjobj_frame(model=m, data=d, obj_name="pickup_point_cylinder") * sm.SE3.Rx(-np.pi) # Get body frame
     drop_zone_frame = get_mjobj_frame(model=m, data=d, obj_name="drop_point_cylinder") *  sm.SE3.Rx(np.pi)  # Get body frame
-
-    # obj_frame, obj_drop_frame = [(cylinder_frame, drop_point_cylinder_frame), (t_block_frame, drop_point_t_block_frame), (box_frame, drop_point_box_frame)]
-    obj_frame = [ cylinder_frame,t_block_frame, box_frame]
-    obj_drop_frame = [drop_point_cylinder_frame, drop_point_t_block_frame, drop_point_box_frame]
     
-    # obj_frame = [t_block_frame, box_frame, cylinder_frame]
-    # obj_drop_frame = [drop_point_t_block_frame, drop_point_box_frame, drop_point_cylinder_frame]
-    # ===== EXPLICITLY SET PLANNER =====
+    obj_frame = [t_block_frame, box_frame, cylinder_frame]
+    obj_drop_frame = [drop_point_t_block_frame, drop_point_box_frame, drop_point_cylinder_frame]
+    
+    # ===== EXPLICITLY SET PLANNER from exercise 6 =====
 
-    # usr_input = input("Points/RRT: ")
-    usr_input = "rrt"
+    usr_input = input("Points/RRT: ")
 
     trajectory = []
-    # via_q=points(robot, d, m, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_frame)
-    # Point to Point with Trapazoidal Velocity Profile
+    # P2P
     if usr_input.lower() == "points":
         print("Point to Point planner")
         trajectory = via_points(robot, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_frame, steps=800)
-        # export_trajectory_data(trajectory, robot, "p2p_results.json")
     # RRT
     elif usr_input.lower() == "rrt":
         print("RRT Planner")
         trajectory = RRT(robot, d, m, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_frame)
-        export_trajectory_data(trajectory, robot, "rrt_results.json")
     #wrong input
     else:
         print("Wrong input, defaulting to RRT")
         trajectory = RRT(robot, d, m, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_frame)
-        # export_trajectory_data(trajectory, robot, "rrt_results.json")
+        
 
     return trajectory

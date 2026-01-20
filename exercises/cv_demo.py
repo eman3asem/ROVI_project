@@ -43,11 +43,12 @@ def program(d, m):
     rot = SO3.Eul(rand_rot, 90, 90,unit="deg").R
     d.joint('duck').qpos[3:] = r2q(rot)
 
+    #The duck was falling, solution was to slow down the simulation a bit
     # 100 steps = 0.2 seconds of simulation time
     for _ in range(100):
         mujoco.mj_step(m, d)
     
-    # NOW get duck position AFTER it has settled on the table
+    # get duck position after it has settled on the table
     duck_pos = d.body('duck').xpos
     duck_rot = d.body('duck').xmat.reshape(3, 3)
     duck_rot = trnorm(duck_rot)
@@ -72,14 +73,14 @@ def program(d, m):
     # show_pointcloud(f"point_cloud_{id:04}.pcd")
 
 
-    ############################################# my code
+    #################### my code starts here #######################
     robot = UR5robot(data=d, model=m)
-    # I1: Pose estimate the duck
+    # Pose estimate the duck
     scene_pointcloud = o3d.io.read_point_cloud(f"point_cloud_{id:04}.pcd")
     #==============================================#
     #from trail_run.py file in Vision project
     # Load duck model as point cloud
-    duck_mesh = o3d.io.read_triangle_mesh('./exercises/duck.stl')
+    duck_mesh = o3d.io.read_triangle_mesh('./exercises/duck.stl') # remember to change the path to avoid errors
     duck_pointcloud = duck_mesh.sample_points_poisson_disk(10000)
     
     # Estimate duck pose in camera coordinates
@@ -94,16 +95,18 @@ def program(d, m):
     print(computeError(ground_truth,estimated_pose))
     #==============================================#
     
-    # Get camera pose and convert estimated pose to world coordinates
+    # Get camera pose
     cam_se3 = get_camera_pose_cv(m, d, camera_name="cam1")
+    # Convert estimated pose to world coordinates
     duck_camera_pose = sm.SE3(estimated_pose, check=False)* sm.SE3.Rx(np.pi)  # Convert 4x4 numpy array to SE3
+    # Transform to world frame
     duck_world_pose = cam_se3 * duck_camera_pose 
-    print(duck_world_pose) # Transform to world frame
+    # print(duck_world_pose) 
     
     
     # only choosing the traslation frame for grasping
     duck_position = duck_world_pose.t
-    # adding a known normal rotation to the grasp frame
+    # adding a normal rotation to the grasp frame
     R_grasp = sm.SE3.Rx(-np.pi)
 
     #setting the frames for the Point-to-Point interpolator
