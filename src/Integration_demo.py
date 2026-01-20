@@ -6,13 +6,13 @@ import math
 import random
 import mujoco
 
-from cam import *
+from src.cam import *
 
-from robot import *
-from src.CV_Project import do_pose_estimation
+from src.robot import *
+from src.Pose_Estimation import do_pose_estimation
 
-from cam import get_pointcloud, get_camera_pose_cv
-from src.Robotics_Project import via_points
+from src.cam import get_pointcloud, get_camera_pose_cv
+from src.UR5_P2P_planner import via_points
 from src.helpers import computeError
 
 
@@ -80,7 +80,7 @@ def program(d, m):
     #==============================================#
     #from trail_run.py file in Vision project
     # Load duck model as point cloud
-    duck_mesh = o3d.io.read_triangle_mesh('./exercises/duck.stl') # remember to change the path to avoid errors
+    duck_mesh = o3d.io.read_triangle_mesh('./src/duck.stl') # remember to change the path to avoid errors
     duck_pointcloud = duck_mesh.sample_points_poisson_disk(10000)
     
     # Estimate duck pose in camera coordinates

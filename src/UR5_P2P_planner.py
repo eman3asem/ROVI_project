@@ -8,7 +8,7 @@ import mujoco
 from ompl import base as ob
 from ompl import geometric as og
 
-from robot import *
+from src.robot import *
 
 Close_gripper=255
 Open_gripper=0

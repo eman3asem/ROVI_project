@@ -21,9 +21,9 @@ import roboticstoolbox as rtb
 from PIL import Image
 
 
-from robot import *
-from cam import *
-from src.RoVi_demo import program
+from src.robot import *
+from src.cam import *
+from src.Integration_demo import program
 
 # Supporting: Ubuntu 22-24, python 3.10 
 

@@ -7,8 +7,7 @@ import numpy as np
 import copy
 
 
-import src.CV_Project as CV_Project
-# import do_pe_gemini as do_pe
+import src.Pose_Estimation as Pose_Estimation
 import helpers
 import settings
 
@@ -23,12 +22,12 @@ def main():
     
     scene_pointcloud_noisy = helpers.add_noise(scene_pointcloud, 0, noise_level)
     
-    object_mesh = o3d.io.read_triangle_mesh("./exercises/duck.stl")
+    object_mesh = o3d.io.read_triangle_mesh("./src/duck.stl")
     object_pointcloud = object_mesh.sample_points_poisson_disk(10000)
 
     o3d.visualization.draw_geometries([object_pointcloud, scene_pointcloud_noisy], window_name='Pre alignment')
 
-    estimated_pose = CV_Project.do_pose_estimation(scene_pointcloud_noisy, object_pointcloud)
+    estimated_pose = Pose_Estimation.do_pose_estimation(scene_pointcloud_noisy, object_pointcloud)
     
 
     print("Final pose")
