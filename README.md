@@ -85,7 +85,7 @@ The main simulation is run by executing `main.py`. By default, it may be configu
         ```
     *   Run the simulation:
         ```bash
-        (venv) $ python main.py
+        (venv) $ mjpython main.py
         ```
 
 
