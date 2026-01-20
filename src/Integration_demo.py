@@ -9,10 +9,10 @@ import mujoco
 from src.cam import *
 
 from src.robot import *
-from src.Pose_Estimation import do_pose_estimation
+from src.pose_estimation import do_pose_estimation
 
 from src.cam import get_pointcloud, get_camera_pose_cv
-from src.UR5_P2P_planner import via_points
+from src.UR5_p2p_planner import via_points
 from src.helpers import computeError
 
 
