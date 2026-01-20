@@ -1,4 +1,0 @@
-activate the virtual environment:
-source venv/bin/activate
-
-mjpython main.py
