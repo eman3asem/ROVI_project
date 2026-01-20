@@ -7,7 +7,7 @@ import numpy as np
 import copy
 
 
-import exercises.CV_Project as CV_Project
+import src.CV_Project as CV_Project
 # import do_pe_gemini as do_pe
 import helpers
 import settings

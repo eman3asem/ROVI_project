@@ -23,19 +23,13 @@ from PIL import Image
 
 from robot import *
 from cam import *
-# from exercises.exercise_9_sol import program
-# from exercises.Project import program
-from exercises.RoVi_demo import program
+from src.RoVi_demo import program
 
 # Supporting: Ubuntu 22-24, python 3.10 
 
 if __name__ == "__main__":
     # Initialize OpenGL context first
-    # mj.GLContext(max_width=1280, max_height=720)  # Adjust size as needed
-
-    # model_path = "scene_grasp_stack.xml"  # Replace with your XML file
     model_path = "scene_project_cv.xml"
-    # model_path = "scene_obstacles.xml"
 
     time_step = 0.002 # Defined in scene.xml 
     
@@ -69,10 +63,6 @@ if __name__ == "__main__":
         last_command_time = time.time()
         command_interval = 0.3  # seconds
 
-        # get_rgb(m, d, renderer)
-        # get_depth(m, d, renderer)
-        # get_pointcloud(m, d, renderer)
-        # show_pointcloud()
 
         while viewer.is_running():
             # Get current time
@@ -82,11 +72,7 @@ if __name__ == "__main__":
             # a policy and applies a control signal before stepping the physics.
             mujoco.mj_step(m, d)
             
-            # print("num cmd_queue: ", len(cmd_queue))
-             # Check if it's time to execute a new command
-            # if current_time - last_command_time >= command_interval and len(cmd_queue): # TODO: Speed up controller of UR5e
             if len(cmd_queue): # TODO: Speed up controller of UR5e
-            # if len(cmd_queue):
                 cmd_element, cmd_queue = cmd_queue[0], cmd_queue[1:]
                 desired_cmd, gripper_value = cmd_element
 

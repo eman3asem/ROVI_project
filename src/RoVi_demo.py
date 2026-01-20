@@ -9,11 +9,11 @@ import mujoco
 from cam import *
 
 from robot import *
-from exercises.CV_Project import do_pose_estimation
+from src.CV_Project import do_pose_estimation
 
 from cam import get_pointcloud, get_camera_pose_cv
-from exercises.Robotics_Project import via_points
-from exercises.helpers import computeError
+from src.Robotics_Project import via_points
+from src.helpers import computeError
 
 
 def r2q(rot):
