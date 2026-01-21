@@ -1,9 +1,6 @@
 import numpy as np
 import spatialmath as sm
 import numpy as np
-import matplotlib.pyplot as plt
-import random
-import mujoco
 
 from ompl import base as ob
 from ompl import geometric as og
@@ -60,8 +57,6 @@ def points(robot, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_frame):
 
     return via_points_list
 
-
-## ======= excercise 4 code below ======= ##
 def parabolic_q_interpolation(start_q, end_q, steps):
     seg = []
     q0 = start_q[0]
@@ -85,9 +80,7 @@ def parabolic_q_interpolation(start_q, end_q, steps):
             q_t = qf - 0.5*ddqb*(tf-t)**2
         seg.append((q_t, start_q[1]))
     return seg
-## ======= excercise 4 code end ======= ##
 
-## ======= excercise 5 code below ======= ##
 def via_points(robot, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_frame, steps):
     print("Generating P2P trajectory")
     via_q= points(robot, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_frame)
@@ -95,11 +88,10 @@ def via_points(robot, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_fram
     for i in range(1, len(via_q)):
         P2P_trajectory.extend(parabolic_q_interpolation(start_q=via_q[i-1], end_q=via_q[i], steps=steps))
     return P2P_trajectory
-## ======= excercise 5 code end ======= ##
 
-## ======= excercise 6 code below ======= ##
+
 class StateValidator:
-    # This is mujoco specific, so I have implemented this for you
+    # This is mujoco specific
     def __init__(self, d, m, num_joint):
         self.d = d
         self.m = m
@@ -113,7 +105,7 @@ class StateValidator:
 # RRT planner function
 def RRT_planner(d, m, start_q, goal_q):
     num_joint = 6
-    space = ob.RealVectorStateSpace(num_joint) # Create a joint-space vector instead of a 2D space as in the example
+    space = ob.RealVectorStateSpace(num_joint)
     # Create joint bounds
     bounds = ob.RealVectorBounds(num_joint)
     bounds.setLow(-3.2)
@@ -162,7 +154,7 @@ def RRT_planner(d, m, start_q, goal_q):
     else: 
         print("No Solution Found!")
         return None
-## ======= excercise 6 code end ======= ##
+
 
 def RRT(robot, d, m, obj_frame, obj_drop_frame, pick_zone_frame, drop_zone_frame):
     EXE_TIME= 1000 #ms
@@ -264,7 +256,6 @@ def program(d, m):
     obj_frame = [t_block_frame, box_frame, cylinder_frame]
     obj_drop_frame = [drop_point_t_block_frame, drop_point_box_frame, drop_point_cylinder_frame]
     
-    # ===== EXPLICITLY SET PLANNER from exercise 6 =====
 
     usr_input = input("Points/RRT: ")
 

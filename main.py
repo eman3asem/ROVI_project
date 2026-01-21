@@ -1,25 +1,7 @@
 import queue
-# import mujoco
 import numpy as np
 import time
-import os
-# import time
-# import mujoco
 import mujoco.viewer
-import glfw
-import roboticstoolbox as rtb
-# import spatialmath as sm
-import mujoco as mj
-import spatialmath as sm
-import spatialmath.base as smb
-from spatialmath import SE3
-from spatialmath.base import trinterp, trnorm
-import matplotlib.pyplot as plt
-# import numpy as np
-from typing import List
-import roboticstoolbox as rtb
-from PIL import Image
-
 
 from src.robot import *
 from src.cam import *

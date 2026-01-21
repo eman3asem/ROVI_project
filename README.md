@@ -1,13 +1,12 @@
 # Vision Guided Pick and Place with MuJoCo
 
-A minimal MuJoCo-based simulation environment for the ROVI (Robotics Vision) course. This project provides a framework for students to implement computer vision methods and path planning algorithms taught in the lectures, using a simulated UR5e robot with a Hand-E gripper.
+A minimal MuJoCo-based simulation environment for the ROVI (Robotics Vision) course. This project demonstrates a vision-guided pick and place pipeline for a robotic manipulator in a simulated environment. A camera provides visual information that is processed to guide the robot toward a target object, enabling autonomous grasping and placement. The focus of the project is on integrating perception with robot control in a modular and extensible way.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
 ![Demo Video](/media/clip_rrtconnect-ezgif.com-video-to-gif-converter.gif)
-
 
 
 ## 🏗️ Project Structure
@@ -17,7 +16,11 @@ A minimal MuJoCo-based simulation environment for the ROVI (Robotics Vision) cou
 *   **`robot.py`**: Contains the `Robot` class with methods like `move_l()`,`move_j()`, `ur_ctrl_qpos()`, `ur_set_qpos()`, and `get_current_q()`.
 *   **`cam.py`**: Contains the `Camera` class with methods to `get_rgb()`, `get_depth()`, and `get_pointcloud()`.
 
-
+### High-Level Pipeline
+1. A simulated camera captures RGB and depth data from the environment.
+2. Visual information is processed to extract target location or pose.
+3. The robot control module converts this information into motion commands.
+4. The robot executes a pick and place action inside the simulator.
 
 ## ⚙️ Prerequisites
 

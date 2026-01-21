@@ -2,7 +2,6 @@ import mujoco as mj
 from spatialmath import SE3, SO3
 from spatialmath.base import trnorm
 from scipy.spatial.transform import Rotation
-import math
 import random
 import mujoco
 
@@ -25,12 +24,6 @@ def r2q(rot):
     return r.as_quat()  # Returns [x, y, z, w]
 
 def program(d, m):
-    # Computer vision
-    # _width = 640*3,
-    # _height = 480*3,
-    # Initialize OpenGL context
-    # mj.GLContext(max_width=640, max_height=480)
-    # Create renderer
 
     camera_name = "cam1"
 
@@ -54,8 +47,6 @@ def program(d, m):
     duck_rot = trnorm(duck_rot)
     duck_se3 = SE3.Rt(duck_rot, duck_pos)
 
-    # mujoco.mj_step(m, d)
-
     cam_se3_2 = get_camera_pose_cv(m, d, camera_name=camera_name)
 
     gt = cam_se3_2.inv() * duck_se3
@@ -70,17 +61,13 @@ def program(d, m):
     
     renderer = mj.Renderer(m, height=480, width=640)
     get_pointcloud(m, d, renderer, f"point_cloud_{id:04}.pcd", camera_name=camera_name)
-    # show_pointcloud(f"point_cloud_{id:04}.pcd")
 
-
-    #################### my code starts here #######################
     robot = UR5robot(data=d, model=m)
     # Pose estimate the duck
     scene_pointcloud = o3d.io.read_point_cloud(f"point_cloud_{id:04}.pcd")
-    #==============================================#
-    #from trail_run.py file in Vision project
+ 
     # Load duck model as point cloud
-    duck_mesh = o3d.io.read_triangle_mesh('./src/duck.stl') # remember to change the path to avoid errors
+    duck_mesh = o3d.io.read_triangle_mesh('./src/duck.stl') 
     duck_pointcloud = duck_mesh.sample_points_poisson_disk(10000)
     
     # Estimate duck pose in camera coordinates
@@ -93,7 +80,6 @@ def program(d, m):
 
     print("Error")
     print(computeError(ground_truth,estimated_pose))
-    #==============================================#
     
     # Get camera pose
     cam_se3 = get_camera_pose_cv(m, d, camera_name="cam1")
@@ -101,8 +87,6 @@ def program(d, m):
     duck_camera_pose = sm.SE3(estimated_pose, check=False)* sm.SE3.Rx(np.pi)  # Convert 4x4 numpy array to SE3
     # Transform to world frame
     duck_world_pose = cam_se3 * duck_camera_pose 
-    # print(duck_world_pose) 
-    
     
     # only choosing the traslation frame for grasping
     duck_position = duck_world_pose.t

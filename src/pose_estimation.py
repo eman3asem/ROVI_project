@@ -5,7 +5,7 @@ from tqdm import tqdm
 import random
 
 def do_pose_estimation(scene_pointcloud, object_pointcloud):
-    # print("YOU NEED TO IMPLEMENT THIS!")
+
     #1. Preprocess Point clouds
     scene_pointcloud_filtered= preprocess_pointcloud(scene_pointcloud)
     object_pointcloud= voxel_grid(object_pointcloud)
@@ -20,12 +20,10 @@ def do_pose_estimation(scene_pointcloud, object_pointcloud):
 
     return final_pose
 
-## ======= excercise 5 code below ======= ##
 # This function just displays the effect of one of the functions visually
 def display_removal(preserved_points, removed_points):
     removed_points.paint_uniform_color([1, 0, 0])        # Show removed points in red
     preserved_points.paint_uniform_color([0.8, 0.8, 0.8])# Show preserved points in gray
-    # o3d.visualization.draw_geometries([removed_points, preserved_points])
 
 def voxel_grid(input_cloud):
     voxel_down_cloud = input_cloud.voxel_down_sample(voxel_size=0.008)
@@ -33,7 +31,6 @@ def voxel_grid(input_cloud):
 
 def outlier_removal(input_cloud):
     cl, ind = input_cloud.remove_statistical_outlier(nb_neighbors=30, std_ratio=1.0)
-    # display_removal(input_cloud.select_by_index(ind), input_cloud.select_by_index(ind, invert=True))
     return input_cloud.select_by_index(ind)
 
 def spatial_filter(input_cloud):
@@ -43,11 +40,9 @@ def spatial_filter(input_cloud):
 
     passthrough = input_cloud.crop(o3d.geometry.AxisAlignedBoundingBox(min_bound=min_bound,
                                                                         max_bound=max_bound))
-    # display_removal(passthrough, input_cloud)
     return passthrough
 
 def preprocess_pointcloud(input_cloud):
-    # o3d.visualization.draw_geometries_with_editing([input_cloud])
     cloud_filtered = voxel_grid(input_cloud)
     print(f'voxel grid {len(cloud_filtered.points)} points')
     cloud_filtered = outlier_removal(cloud_filtered)
@@ -58,9 +53,7 @@ def preprocess_pointcloud(input_cloud):
     
     return cloud_filtered
 
-## ======= end of excercise 5 code ======= ##
 
-### ======= excercise 7 code below ======= ##
 ########### local pose estimation ###########
 def create_kdtree(scn):
     tree = o3d.geometry.KDTreeFlann(scn)
@@ -169,7 +162,6 @@ def sample_3_random_correspondences(corr):
     if len(corr) < 3:
         return None
 
-    # FIX suggested by AI: random.sample cannot handle Open3D vectors directly.
     # We sample 3 random indices from the range of the correspondence size.
     idx = random.sample(range(len(corr)), k=3)
 
@@ -252,6 +244,3 @@ def global_pose_estimation(obj, scn):
     obj = apply_pose(obj, pose_best)
 
     return pose_best
-
-### ======= excercise 7 code end ======= ##
-
