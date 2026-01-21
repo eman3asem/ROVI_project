@@ -1,4 +1,4 @@
-# TA-ROVI-ROB: Robotics Vision and Planning in MuJoCo
+# Vision Guided Pick and Place with MuJoCo
 
 A minimal MuJoCo-based simulation environment for the ROVI (Robotics Vision) course. This project provides a framework for students to implement computer vision methods and path planning algorithms taught in the lectures, using a simulated UR5e robot with a Hand-E gripper.
 
@@ -12,8 +12,8 @@ A minimal MuJoCo-based simulation environment for the ROVI (Robotics Vision) cou
 
 ## 🏗️ Project Structure
 ### Key Files Explained:
-*   **`exercises/`**: Students will create files (e.g., `exercise_1.py`) in this directory for their assignments. Teaching Assistants can place their corresponding solution files here.
-*   **`main.py`**: The core simulation file. To run a specific exercise, change the import (e.g., `from exercises.exercise_1 import program`).
+*   **`src/`**: contains project files.
+*   **`main.py`**: The core simulation file. To run a specific part, change the import (e.g., `from src.integration import program`).
 *   **`robot.py`**: Contains the `Robot` class with methods like `move_l()`,`move_j()`, `ur_ctrl_qpos()`, `ur_set_qpos()`, and `get_current_q()`.
 *   **`cam.py`**: Contains the `Camera` class with methods to `get_rgb()`, `get_depth()`, and `get_pointcloud()`.
 
@@ -43,8 +43,8 @@ Follow these steps to set up the development environment and install dependencie
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://gitlab.sdu.dk/wilb/rovi2025.git
-    cd rovi2025
+    git clone https://github.com/eman3asem/vision-guided-pick-place.git
+    cd vision-guided-pick-place
     ```
 
 2.  **Create a virtual environment:** (Recommended to isolate dependencies)
@@ -73,15 +73,15 @@ You are now ready to run the project!
 ## 🎯 Usage
 
 ### Running an Exercise
-The main simulation is run by executing `main.py`. By default, it may be configured to run a specific exercise or a demo.
+The main simulation is run by executing `main.py`. By default, it may be configured to run a specific part or a demo.
 
-1.  **To run a specific exercise (e.g., Exercise 1):**
+1.  **To run a specific part (e.g., pose_estimation):**
     *   Open `main.py` in a text editor.
     *   Find the import statement near the top and change it to import your desired program.
     *   **Example:**
         ```python
-        # Change this line to the exercise file you want to run, e.g. exercise_2, ..., exercise_8 :
-        from exercises.exercise_1 import program
+        # Change this line to the part file you want to run, e.g. pose_estimation, ..., UR5_p2p_planner :
+        from src.pose_estimation import program
         ```
     *   Run the simulation:
         ```bash
@@ -90,7 +90,7 @@ The main simulation is run by executing `main.py`. By default, it may be configu
 
 
 ### Developing Your Solution
-1.  Create a new file in the `exercises/` folder (e.g., `exercise_2.py`).
+1.  Create a new file in the `src/` folder (e.g., `pose_estimation.py`).
 2.  Implement your `program(model, data, robot, cam)` function in that file. This is the entry point that `main.py` will call.
 3.  Use the helper functions from `robot.py` and `cam.py` to control the robot and process vision data.
 4.  Update the import in `main.py` to test your implementation.
@@ -115,4 +115,3 @@ Key methods for perception:
 If you encounter issues, please check the following:
 1.  Ensure all **Prerequisites** are met, especially the system-wide installation of **OMPL**.
 2.  Ensure your virtual environment is activated and all packages from `requirements.txt` are installed correctly.
-3.  For course-specific questions, please refer to the course material or contact the teaching staff.
